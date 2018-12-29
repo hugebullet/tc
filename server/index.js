@@ -1,6 +1,7 @@
 const mysql = require('mysql');
 const express = require('express');
 const moment = require('moment');
+
 const connection = mysql.createConnection(process.env.DATABASE_URL);
 
 const app = express();
@@ -8,7 +9,8 @@ const app = express();
 app.get('/api/advertisers', (req, res) => {
   connection.query('SELECT * FROM advertisers', (err, results) => {
     if (err) {
-      throw err;
+      console.error(err);
+      return res.sendStatus(500);
     }
     res.send(JSON.stringify(results));
   });
@@ -17,7 +19,8 @@ app.get('/api/advertisers', (req, res) => {
 app.get('/api/campaigns', (req, res) => {
   connection.query('SELECT * FROM campaigns', (err, results) => {
     if (err) {
-      throw err;
+      console.error(err);
+      return res.sendStatus(500);
     }
     res.send(JSON.stringify(results));
   });
@@ -30,6 +33,7 @@ app.get('/api/advertisers/:id/campaigns', (req, res) => {
   }
   connection.query(`SELECT * FROM campaigns WHERE advertiser_id = ${advertiserId}`, (err, results) => {
     if (err) {
+      console.error(err);
       return res.sendStatus(500);
     }
     res.send(JSON.stringify(results));
@@ -107,14 +111,15 @@ app.get('/api/reports', (req, res) => {
     if (clientError) {
       res.status(400).send(e.message);
     } else {
-      console.log(e);
+      console.error(e);
       res.sendStatus(500);
     }
   }
 });
 
-app.listen(3000, () => {
-  console.log('Listening on 3000');
+const port = process.env.PORT || 3000;
+app.listen(port, () => {
+  console.log(`Listening on ${port}`);
 });
 
 function costModelClause(values) {
