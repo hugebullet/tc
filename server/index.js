@@ -1,10 +1,15 @@
 const mysql = require('mysql');
 const express = require('express');
 const moment = require('moment');
+const cors = require('cors');
 
 const connection = mysql.createConnection(process.env.DATABASE_URL);
 
 const app = express();
+
+app.use(cors({
+  origin: 'http://localhost:3000'
+}));
 
 app.get('/api/advertisers', (req, res) => {
   connection.query('SELECT * FROM advertisers', (err, results) => {
@@ -166,7 +171,7 @@ function selectColumns(values) {
   if (!values.some(c => metricsMap(c))) {
     throw new SyntaxError('at least one metric column is required');
   }
-  values = values.map(v => {
+  const selectColumns = values.map(v => {
     if (groupByMap(v)) {
       return `${groupByMap(v)} AS ${v}`;
     }
@@ -175,10 +180,10 @@ function selectColumns(values) {
     }
     return '';
   });
-  if (values.some(v => !v)) {
+  if (selectColumns.some(v => !v)) {
     throw new SyntaxError('columns are invalid');
   }
-  return values;
+  return selectColumns;
 }
 
 const VALID_COST_MODELS = ['per_impression', 'per_click', 'per_install'];
@@ -209,7 +214,8 @@ const GROUP_BY_MAP = {
   advertiser_id: 'reports.advertiser_id',
   campaign_name: 'campaigns.name',
   advertiser_name: 'advertisers.name',
-  cost_model: 'campaigns.cost_model'
+  cost_model: 'campaigns.cost_model',
+  date: 'reports.date'
 };
 function groupByMap(k) {
   return GROUP_BY_MAP[k];
