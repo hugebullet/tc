@@ -70,8 +70,7 @@ app.get('/api/reports', (req, res) => {
 
 app.get('/api/reports/count', (req, res) => {
   try {
-    const select = 'SELECT COUNT(*) AS count FROM reports';
-    const query = `${select}${join(req)}${where(req)}`;
+    const query = `SELECT COUNT(*) AS count FROM (${select(req)}${join(req)}${where(req)}${groupBy(req)}) AS innerQuery`;
     console.log(query);
 
     connection.query(query, (err, results) => {
@@ -99,9 +98,6 @@ app.listen(port, () => {
 function select({ query }) {
   if (!query.columns) {
     throw new SyntaxError('columns are required');
-  }
-  if (!query.columns.some(c => metricsMap(c))) {
-    throw new SyntaxError('at least one metric column is required');
   }
   const selectColumns = query.columns.map(c => {
     if (groupByMap(c)) {

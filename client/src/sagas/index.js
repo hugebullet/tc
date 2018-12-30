@@ -1,40 +1,41 @@
-import { all, put, fork, take, call } from 'redux-saga/effects'
-import { REQUEST, fetchReports } from '../actions';
+import { all, put, fork, take, call, select } from 'redux-saga/effects'
+import { REQUEST, fetchReports, fetchReportsCount, SET_TABLE_VIEW_STATE } from '../actions';
 import * as api from '../services/api';
 
 export default function* root() {
   yield all([
-    fork(onFetchReports),
+    fork(onApiRequest(fetchReports, api.fetchReports)),
+    fork(onApiRequest(fetchReportsCount, api.fetchReportsCount)),
+    fork(onTableViewStateChange),
     fork(onStartup)
   ]);
 };
 
 function* onStartup () {
-  yield put(fetchReports.request({ requester: 'table' }));
+  yield put(fetchReports.request({ target: 'tableView' }));
+  yield put(fetchReportsCount.request({ target: 'tableView' }));
 }
 
-function* onFetchReports() {
-  while (true) {
-    const { payload } = yield take(fetchReports[REQUEST]);
-    const { requester } = payload;
-    try {
-      const data = yield call(api.fetchReports, {
-        columns: [
-          'advertiser_id',
-          'advertiser_name',
-          'campaign_id',
-          'campaign_name',
-          'cost_model',
-          'date',
-          'impressions',
-          'clicks',
-          'installs',
-          'cost'
-        ]
-      });
-      yield put(fetchReports.success({ requester, data }));
-    } catch (data) {
-      yield put(fetchReports.failure({ requester, data }));
+function onApiRequest(actionCreators, apiCall) {
+  return function* () {
+    while (true) {
+      const { payload } = yield take(actionCreators[REQUEST]);
+      const { target } = payload;
+      const state = yield select();
+      try {
+        const data = yield call(apiCall, state[target]);
+        yield put(actionCreators.success({ target, data }));
+      } catch (data) {
+        yield put(actionCreators.failure({ target, data }));
+      }
     }
+  }
+}
+
+function* onTableViewStateChange() {
+  while (true) {
+    yield take(SET_TABLE_VIEW_STATE);
+    yield put(fetchReports.request({ target: 'tableView' }));
+    yield put(fetchReportsCount.request({ target: 'tableView' }));
   }
 }

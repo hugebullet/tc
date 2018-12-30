@@ -1,14 +1,14 @@
 import React, { Component } from 'react';
 import CssBaseline from '@material-ui/core/CssBaseline';
 import './App.css';
-import TableContainer from './containers/TableContainer';
+import ReportTableContainer from './containers/TableViewContainer';
 
 class App extends Component {
   render() {
     return (
       <React.Fragment>
         <CssBaseline />
-        <TableContainer />
+        <ReportTableContainer />
       </React.Fragment>
     );
   }
