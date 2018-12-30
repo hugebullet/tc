@@ -100,9 +100,35 @@ app.get('/api/reports', (req, res) => {
       .join('');
 
     /**
+     *  ORDER BY
+     */
+    const orderByColumn = req.query.order_by || req.query.columns[0];
+    if (!req.query.columns.includes(orderByColumn)) {
+      throw new SyntaxError('order_by value must be present in columns');
+    }
+    const orderDir = (req.query.order_dir || 'ASC').toUpperCase();
+    if (orderDir !== 'ASC' && orderDir !== 'DESC') {
+      throw new SyntaxError('order_dir must be either ASC or DESC');
+    }
+    const orderBy = ` ORDER BY ${orderByColumn} ${orderDir}`;
+
+    /**
+     *  LIMIT
+     */
+    const page = parseInt(req.query.page, 10) || 0;
+    if (page < 0) {
+      throw new SyntaxError('page must not be negative')
+    }
+    const perPage = parseInt(req.query.per_page, 10) || 50;
+    if (perPage <= 0) {
+      throw new SyntaxError('per_page must be greater than 0');
+    }
+    const limit = ` LIMIT ${page * perPage}, ${perPage}`;
+
+    /**
      *  FINAL QUERY
      */
-    const query = `${select}${joins}${where}${groupBy}`;
+    const query = `${select}${joins}${where}${groupBy}${orderBy}${limit}`;
     console.log(query);
 
     connection.query(query, (err, results) => {
