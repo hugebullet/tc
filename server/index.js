@@ -2,6 +2,7 @@ const mysql = require('mysql');
 const express = require('express');
 const moment = require('moment');
 const cors = require('cors');
+const { camelizeKeys } = require('humps');
 
 const connection = mysql.createConnection(process.env.DATABASE_URL);
 
@@ -17,7 +18,7 @@ app.get('/api/advertisers', (req, res) => {
       console.error(err);
       return res.sendStatus(500);
     }
-    res.send(JSON.stringify(results));
+    res.send(camelizeKeys(results));
   });
 });
 
@@ -27,7 +28,7 @@ app.get('/api/campaigns', (req, res) => {
       console.error(err);
       return res.sendStatus(500);
     }
-    res.send(JSON.stringify(results));
+    res.send(camelizeKeys(results));
   });
 });
 
@@ -41,101 +42,43 @@ app.get('/api/advertisers/:id/campaigns', (req, res) => {
       console.error(err);
       return res.sendStatus(500);
     }
-    res.send(JSON.stringify(results));
+    res.send(camelizeKeys(results));
   });
 });
 
 app.get('/api/reports', (req, res) => {
   try {
-    let joinAdvertisers = false;
-    let joinCampaigns = false;
-
-    /**
-     *  WHERE
-     */
-    // not gonna support campaign_name and advertiser_name filters for now
-    // frontend will send IDs
-    const { campaign_id, advertiser_id, cost_model } = JSON.parse(req.query.filter || '{}');
-    if (cost_model) {
-      joinCampaigns = true;
-    }
-    let where = [
-      costModelClause(cost_model),
-      idFilterClause('campaign_id', campaign_id),
-      idFilterClause('advertiser_id', advertiser_id),
-      dateClause('>=', req.query.start_date),
-      dateClause('<=', req.query.end_date)
-    ]
-      .filter(Boolean)
-      .join(' AND ');
-    if (where) {
-      where = ` WHERE ${where}`;
-    }
-
-    /**
-     *  GROUP BY
-     */
-    const columns = groupByColumns(req.query.columns);
-    if (!joinCampaigns && columns.some(c => c.indexOf('campaigns.') === 0)) {
-      joinCampaigns = true;
-    }
-    if (!joinAdvertisers && columns.some(c => c.indexOf('advertisers.') === 0)) {
-      joinAdvertisers = true;
-    }
-    const groupBy = columns.length ? ` GROUP BY ${columns.join(',')}` : '';
-
-    /**
-     *  SELECT
-     */
-    const select = `SELECT ${selectColumns(req.query.columns).join(',')} FROM reports`;
-
-    /**
-     *  JOIN
-     */
-    const joins = [
-      joinCampaigns && ' LEFT JOIN campaigns ON reports.campaign_id = campaigns.id',
-      joinAdvertisers && ' LEFT JOIN advertisers ON reports.advertiser_id = advertisers.id',
-    ]
-      .filter(Boolean)
-      .join('');
-
-    /**
-     *  ORDER BY
-     */
-    const orderByColumn = req.query.order_by || req.query.columns[0];
-    if (!req.query.columns.includes(orderByColumn)) {
-      throw new SyntaxError('order_by value must be present in columns');
-    }
-    const orderDir = (req.query.order_dir || 'ASC').toUpperCase();
-    if (orderDir !== 'ASC' && orderDir !== 'DESC') {
-      throw new SyntaxError('order_dir must be either ASC or DESC');
-    }
-    const orderBy = ` ORDER BY ${orderByColumn} ${orderDir}`;
-
-    /**
-     *  LIMIT
-     */
-    const page = parseInt(req.query.page, 10) || 0;
-    if (page < 0) {
-      throw new SyntaxError('page must not be negative')
-    }
-    const perPage = parseInt(req.query.per_page, 10) || 50;
-    if (perPage <= 0) {
-      throw new SyntaxError('per_page must be greater than 0');
-    }
-    const limit = ` LIMIT ${page * perPage}, ${perPage}`;
-
-    /**
-     *  FINAL QUERY
-     */
-    const query = `${select}${joins}${where}${groupBy}${orderBy}${limit}`;
+    const query = `${select(req)}${join(req)}${where(req)}${groupBy(req)}${orderBy(req)}${limit(req)}`;
     console.log(query);
 
     connection.query(query, (err, results) => {
       if (err) {
         throw err;
       }
-      res.send(JSON.stringify(results));
+      res.send(results);
+    });
+  } catch (e) {
+    const clientError = e instanceof SyntaxError || e instanceof TypeError;
+    if (clientError) {
+      res.status(400).send(e.message);
+    } else {
+      console.error(e);
+      res.sendStatus(500);
+    }
+  }
+});
+
+app.get('/api/reports/count', (req, res) => {
+  try {
+    const select = 'SELECT COUNT(*) AS count FROM reports';
+    const query = `${select}${join(req)}${where(req)}`;
+    console.log(query);
+
+    connection.query(query, (err, results) => {
+      if (err) {
+        throw err;
+      }
+      res.send(results);
     });
   } catch (e) {
     const clientError = e instanceof SyntaxError || e instanceof TypeError;
@@ -153,12 +96,94 @@ app.listen(port, () => {
   console.log(`Listening on ${port}`);
 });
 
+function select({ query }) {
+  if (!query.columns) {
+    throw new SyntaxError('columns are required');
+  }
+  if (!query.columns.some(c => metricsMap(c))) {
+    throw new SyntaxError('at least one metric column is required');
+  }
+  const selectColumns = query.columns.map(c => {
+    if (groupByMap(c)) {
+      return `${groupByMap(c)} AS ${c}`;
+    }
+    if (metricsMap(c)) {
+      return `${metricsMap(c)} AS ${c}`;
+    }
+    return '';
+  });
+  if (selectColumns.some(c => !c)) {
+    throw new SyntaxError('columns are invalid');
+  }
+  return `SELECT ${selectColumns.join(',')} FROM reports`;
+}
+
+function join({ query }) {
+  const filterColumns = Object.keys(JSON.parse(query.filter || '{}'));
+  const requiredColumns = [...query.columns, ...filterColumns];
+  console.log(requiredColumns);
+  const joinCampaigns = requiredColumns.some(c => groupByMap(c) && groupByMap(c).indexOf('campaigns.') === 0);
+  const joinAdvertisers = requiredColumns.some(c => groupByMap(c) && groupByMap(c).indexOf('advertisers.') === 0);
+  return [
+    joinCampaigns && ' LEFT JOIN campaigns ON reports.campaign_id = campaigns.id',
+    joinAdvertisers && ' LEFT JOIN advertisers ON reports.advertiser_id = advertisers.id',
+  ]
+    .filter(Boolean)
+    .join('');
+}
+
+function where({ query }) {
+  const { campaignId, advertiserId, costModel } = JSON.parse(query.filter || '{}');
+  const where = [
+    costModelClause(costModel),
+    idFilterClause('campaign_id', campaignId),
+    idFilterClause('advertiser_id', advertiserId),
+    dateClause('>=', query.startDate),
+    dateClause('<=', query.endDate)
+  ]
+    .filter(Boolean)
+    .join(' AND ');
+  return where ? ` WHERE ${where}` : '';
+}
+
+function groupBy({ query }) {
+  if (!query.columns || !query.columns.length) {
+    throw new SyntaxError('columns are required');
+  }
+  const groupByColumns = query.columns.map(c => groupByMap(c)).filter(Boolean);
+  return groupByColumns.length ? ` GROUP BY ${groupByColumns.join(',')}` : '';
+}
+
+function orderBy({ query }) {
+  const orderByColumn = query.orderBy || query.columns[0];
+  if (!query.columns.includes(orderByColumn)) {
+    throw new SyntaxError('orderBy value must be present in columns');
+  }
+  const orderDir = (query.orderDir || 'ASC').toUpperCase();
+  if (orderDir !== 'ASC' && orderDir !== 'DESC') {
+    throw new SyntaxError('orderDir must be either ASC or DESC');
+  }
+  return ` ORDER BY ${orderByColumn} ${orderDir}`;
+}
+
+function limit({ query }) {
+  const page = parseInt(query.page, 10) || 0;
+  if (page < 0) {
+    throw new SyntaxError('page must not be negative')
+  }
+  const perPage = parseInt(query.perPage, 10) || 50;
+  if (perPage <= 0) {
+    throw new SyntaxError('perPage must be greater than 0');
+  }
+  return ` LIMIT ${page * perPage}, ${perPage}`;
+}
+
 function costModelClause(values) {
   if (!values) {
     return '';
   }
   if (values.some(v => !validCostModel(v))) {
-    throw new SyntaxError('cost_model is invalid');
+    throw new SyntaxError('costModel is invalid');
   }
   return `cost_model IN ('${values.join('\',\'')}')`;
 }
@@ -181,35 +206,6 @@ function dateClause(operator, date) {
     throw new SyntaxError('date is invalid');
   }
   return `\`date\` ${operator} ${date}`;
-}
-
-function groupByColumns(values) {
-  if (!values) {
-    throw new SyntaxError('columns are required');
-  }
-  return values.map(c => groupByMap(c)).filter(Boolean);
-}
-
-function selectColumns(values) {
-  if (!values) {
-    throw new SyntaxError('columns are required');
-  }
-  if (!values.some(c => metricsMap(c))) {
-    throw new SyntaxError('at least one metric column is required');
-  }
-  const selectColumns = values.map(v => {
-    if (groupByMap(v)) {
-      return `${groupByMap(v)} AS ${v}`;
-    }
-    if (metricsMap(v)) {
-      return `${metricsMap(v)} AS ${v}`;
-    }
-    return '';
-  });
-  if (selectColumns.some(v => !v)) {
-    throw new SyntaxError('columns are invalid');
-  }
-  return selectColumns;
 }
 
 const VALID_COST_MODELS = ['per_impression', 'per_click', 'per_install'];
@@ -236,11 +232,11 @@ function metricsMap(k) {
 }
 
 const GROUP_BY_MAP = {
-  campaign_id: 'reports.campaign_id',
-  advertiser_id: 'reports.advertiser_id',
-  campaign_name: 'campaigns.name',
-  advertiser_name: 'advertisers.name',
-  cost_model: 'campaigns.cost_model',
+  campaignId: 'reports.campaign_id',
+  advertiserId: 'reports.advertiser_id',
+  campaignName: 'campaigns.name',
+  advertiserName: 'advertisers.name',
+  costModel: 'campaigns.cost_model',
   date: 'reports.date'
 };
 function groupByMap(k) {
