@@ -111,7 +111,7 @@ class TableView extends PureComponent {
   };
 
   handleChangePerPage = event => {
-    this.props.setTableViewPerPage(event.target.value);
+    this.props.setTableViewPerPage(parseInt(event.target.value, 10));
   };
 
   render() {

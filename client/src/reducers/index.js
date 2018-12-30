@@ -36,7 +36,7 @@ function tableView(state = {
     case SET_TABLE_VIEW_PAGE:
       return { ...state, page: payload };
     case SET_TABLE_VIEW_PER_PAGE:
-      return { ...state, per_page: payload };
+      return { ...state, perPage: payload };
     default:
       return state;
   }
