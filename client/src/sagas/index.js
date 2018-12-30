@@ -1,12 +1,12 @@
 import { all, put, fork, take, call, select } from 'redux-saga/effects'
-import { REQUEST, fetchReports, fetchReportsCount, SET_TABLE_VIEW_STATE } from '../actions';
+import { REQUEST, fetchReports, fetchReportsCount, SET_TABLE_VIEW_PAGE, SET_TABLE_VIEW_PER_PAGE } from '../actions';
 import * as api from '../services/api';
 
 export default function* root() {
   yield all([
     fork(onApiRequest(fetchReports, api.fetchReports)),
     fork(onApiRequest(fetchReportsCount, api.fetchReportsCount)),
-    fork(onTableViewStateChange),
+    fork(onTableViewPaginationChange),
     fork(onStartup)
   ]);
 };
@@ -32,10 +32,9 @@ function onApiRequest(actionCreators, apiCall) {
   }
 }
 
-function* onTableViewStateChange() {
+function* onTableViewPaginationChange() {
   while (true) {
-    yield take(SET_TABLE_VIEW_STATE);
+    yield take([SET_TABLE_VIEW_PAGE, SET_TABLE_VIEW_PER_PAGE]);
     yield put(fetchReports.request({ target: 'tableView' }));
-    yield put(fetchReportsCount.request({ target: 'tableView' }));
   }
 }

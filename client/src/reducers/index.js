@@ -1,4 +1,4 @@
-import { fetchReports, fetchReportsCount, REQUEST, SUCCESS, SET_TABLE_VIEW_STATE } from '../actions';
+import { fetchReports, fetchReportsCount, REQUEST, SUCCESS, SET_TABLE_VIEW_PER_PAGE, SET_TABLE_VIEW_PAGE } from '../actions';
 import { combineReducers } from 'redux';
 
 export default combineReducers({
@@ -22,11 +22,21 @@ function tableView(state = {
     case fetchReportsCount[REQUEST]:
       return { ...state, loadingCount: true };
     case fetchReports[SUCCESS]:
-      return payload.target === 'tableView' ? { ...state, rows: payload.data } : state;
+      return payload.target !== 'tableView' ? state : {
+        ...state,
+        rows: payload.data,
+        loadingRows: false
+      };
     case fetchReportsCount[SUCCESS]:
-      return payload.target === 'tableView' ? { ...state, count: payload.data[0].count } : state;
-    case SET_TABLE_VIEW_STATE:
-      return { ...state, ...payload };
+      return payload.target !== 'tableView' ? state : {
+        ...state,
+        count: payload.data[0].count,
+        loadingCount: false
+      };
+    case SET_TABLE_VIEW_PAGE:
+      return { ...state, page: payload };
+    case SET_TABLE_VIEW_PER_PAGE:
+      return { ...state, per_page: payload };
     default:
       return state;
   }

@@ -107,11 +107,11 @@ const styles = theme => ({
 
 class TableView extends PureComponent {
   handleChangePage = (event, page) => {
-    this.props.setTableViewState({ page });
+    this.props.setTableViewPage(page);
   };
 
   handleChangePerPage = event => {
-    this.props.setTableViewState({ perPage: event.target.value });
+    this.props.setTableViewPerPage(event.target.value);
   };
 
   render() {
@@ -171,7 +171,8 @@ TableView.propTypes = {
   loadingRows: PropTypes.bool.isRequired,
   loadingCount: PropTypes.bool.isRequired,
   count: PropTypes.number.isRequired,
-  setTableViewState: PropTypes.func.isRequired
+  setTableViewPage: PropTypes.func.isRequired,
+  setTableViewPerPage: PropTypes.func.isRequired,
 };
 
 export default withStyles(styles)(TableView);
