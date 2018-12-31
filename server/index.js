@@ -117,7 +117,6 @@ function select({ query }) {
 function join({ query }) {
   const filterColumns = Object.keys(JSON.parse(query.filter || '{}'));
   const requiredColumns = [...query.columns, ...filterColumns];
-  console.log(requiredColumns);
   const joinCampaigns = requiredColumns.some(c => groupByMap(c) && groupByMap(c).indexOf('campaigns.') === 0);
   const joinAdvertisers = requiredColumns.some(c => groupByMap(c) && groupByMap(c).indexOf('advertisers.') === 0);
   return [

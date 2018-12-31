@@ -1,4 +1,13 @@
-import { fetchReports, fetchReportsCount, REQUEST, SUCCESS, SET_TABLE_VIEW_PER_PAGE, SET_TABLE_VIEW_PAGE, SET_TABLE_VIEW_ORDER } from '../actions';
+import {
+  fetchReports,
+  fetchReportsCount,
+  REQUEST,
+  SUCCESS,
+  SET_TABLE_VIEW_PER_PAGE,
+  SET_TABLE_VIEW_PAGE,
+  SET_TABLE_VIEW_ORDER,
+  SET_TABLE_VIEW_COLUMNS
+} from '../actions';
 import { combineReducers } from 'redux';
 
 export default combineReducers({
@@ -39,6 +48,13 @@ function tableView(state = {
       return { ...state, perPage: payload };
     case SET_TABLE_VIEW_ORDER:
       return { ...state, ...payload };
+    case SET_TABLE_VIEW_COLUMNS:
+      if (payload.length < 1) {
+        return state;
+      }
+      const orderBy = payload.includes(state.orderBy) ? state.orderBy : payload[0];
+      const orderDir = orderBy !== state.orderBy ? 'desc' : state.orderDir;
+      return { ...state, columns: payload, page: 0, orderBy, orderDir };
     default:
       return state;
   }

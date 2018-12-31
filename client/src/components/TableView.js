@@ -17,8 +17,11 @@ import TableHead from '@material-ui/core/TableHead';
 import TableSortLabel from '@material-ui/core/TableSortLabel';
 import Toolbar from '@material-ui/core/Toolbar';
 // import Typography from '@material-ui/core/Typography';
-import Tooltip from '@material-ui/core/Tooltip';
-import FilterListIcon from '@material-ui/icons/FilterList';
+// import Tooltip from '@material-ui/core/Tooltip';
+// import EditIcon from '@material-ui/icons/EditIcon';
+import Checkbox from '@material-ui/core/Checkbox';
+import FormGroup from '@material-ui/core/FormGroup';
+import FormControlLabel from '@material-ui/core/FormControlLabel';
 
 
 class TableViewHead extends React.Component {
@@ -56,7 +59,7 @@ class TableViewHead extends React.Component {
 
 TableViewHead.propTypes = {
   onRequestSort: PropTypes.func.isRequired,
-  order: PropTypes.string.isRequired,
+  orderDir: PropTypes.string.isRequired,
   orderBy: PropTypes.string.isRequired,
   columns: PropTypes.arrayOf(String).isRequired
 };
@@ -65,19 +68,20 @@ const toolbarStyles = theme => ({
   root: {
     paddingRight: theme.spacing.unit,
   },
+  actions: {
+    flexDirection: 'row'
+  },
   spacer: {
     flex: '1 1 100%',
-  },
-  actions: {
-    color: theme.palette.text.secondary,
   },
   title: {
     flex: '0 0 auto',
   },
 });
 
+const ALL_COLUMNS = ['advertiserId', 'advertiserName', 'campaignId', 'campaignName', 'costModel', 'impressions', 'clicks', 'installs', 'cost'];
 let TableViewToolbar = props => {
-  const { classes } = props;
+  const { classes, columns, onColumnChange } = props;
 
   return (
     <Toolbar
@@ -89,19 +93,24 @@ let TableViewToolbar = props => {
         </Typography>
       </div> */}
       {/* <div className={classes.spacer} /> */}
-      <div className={classes.actions}>
-        <Tooltip title="Filter list">
-          <IconButton aria-label="Filter list">
-            <FilterListIcon />
-          </IconButton>
-        </Tooltip>
-      </div>
+      <FormGroup className={classes.actions}>
+        {ALL_COLUMNS.map(column =>
+          <FormControlLabel
+            key={column}
+            control={
+              <Checkbox checked={columns.includes(column)} onChange={e => onColumnChange(e, column)} value={column} />
+            }
+            label={prettifyColumnName(column)}
+          />
+        )}
+      </FormGroup>
     </Toolbar>
   );
 };
 
 TableViewToolbar.propTypes = {
-  classes: PropTypes.object.isRequired
+  classes: PropTypes.object.isRequired,
+  onColumnChange: PropTypes.func.isRequired
 };
 
 TableViewToolbar = withStyles(toolbarStyles)(TableViewToolbar);
@@ -217,12 +226,23 @@ class TableView extends PureComponent {
     this.props.setTableViewOrder({ orderBy, orderDir });
   };
 
+  handleColumnChange = (event, column) => {
+    const { columns } = this.props;
+    const newColumns = event.target.checked ?
+      [...columns, column] :
+      columns.filter(c => c !== column)
+    this.props.setTableViewColumns(
+      ALL_COLUMNS.filter(c =>  newColumns.includes(c))
+    );
+  };
+
   render() {
     const { classes, page, perPage, columns, rows, count, orderBy, orderDir } = this.props;
     const emptyRows = perPage - Math.min(perPage, rows.length);
 
     return (
       <Paper className={classes.root}>
+        <TableViewToolbar columns={columns} onColumnChange={this.handleColumnChange}/>
         <div className={classes.tableWrapper}>
           <Table className={classes.table}>
             <TableViewHead
@@ -284,7 +304,8 @@ TableView.propTypes = {
   orderDir: PropTypes.string.isRequired,
   setTableViewPage: PropTypes.func.isRequired,
   setTableViewPerPage: PropTypes.func.isRequired,
-  setTableViewOrder: PropTypes.func.isRequired
+  setTableViewOrder: PropTypes.func.isRequired,
+  setTableViewColumns: PropTypes.func.isRequired
 };
 
 export default withStyles(styles)(TableView);
