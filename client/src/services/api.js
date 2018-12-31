@@ -23,6 +23,21 @@ export async function fetchReportsCount(params) {
   }
   return response.json();
 }
+export async function fetchAdvertisers() {
+  const response = await fetch(`${API_URL}/advertisers`);
+  if (response.status !== 200) {
+    throw new Error('Failed to load advertisers')
+  }
+  return response.json();
+}
+
+export async function fetchCampaigns() {
+  const response = await fetch(`${API_URL}/campaigns`);
+  if (response.status !== 200) {
+    throw new Error('Failed to load campaigns')
+  }
+  return response.json();
+}
 
 function appendSearchParams(url, params, paramWhitelist) {
   Object.keys(params).forEach(key => {

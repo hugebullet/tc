@@ -79,7 +79,7 @@ const toolbarStyles = theme => ({
   },
 });
 
-const ALL_COLUMNS = ['advertiserId', 'advertiserName', 'campaignId', 'campaignName', 'costModel', 'impressions', 'clicks', 'installs', 'cost'];
+const ALL_COLUMNS = ['date', 'advertiserId', 'advertiserName', 'campaignId', 'campaignName', 'costModel', 'impressions', 'clicks', 'installs', 'cost'];
 let TableViewToolbar = props => {
   const { classes, columns, onColumnChange } = props;
 
@@ -256,7 +256,7 @@ class TableView extends PureComponent {
                 return (
                   <TableRow key={index}>
                     {columns.map(column =>
-                      <TableCell key={column}>{row[column]}</TableCell>
+                      <TableCell key={column}>{column === 'cost' ? `$${row[column]}` : row[column]}</TableCell>
                     )}
                   </TableRow>
                 );

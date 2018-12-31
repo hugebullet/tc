@@ -55,7 +55,12 @@ app.get('/api/reports', (req, res) => {
       if (err) {
         throw err;
       }
-      res.send(results);
+      res.send(results.map(row => {
+        if (row.date) {
+          row.date = moment(row.date).format('YYYY-MM-DD');
+        }
+        return row;
+      }));
     });
   } catch (e) {
     const clientError = e instanceof SyntaxError || e instanceof TypeError;
@@ -131,8 +136,8 @@ function where({ query }) {
   const { campaignId, advertiserId, costModel } = JSON.parse(query.filter || '{}');
   const where = [
     costModelClause(costModel),
-    idFilterClause('campaign_id', campaignId),
-    idFilterClause('advertiser_id', advertiserId),
+    idFilterClause('reports.campaign_id', campaignId),
+    idFilterClause('reports.advertiser_id', advertiserId),
     dateClause('>=', query.startDate),
     dateClause('<=', query.endDate)
   ]
@@ -174,17 +179,17 @@ function limit({ query }) {
 }
 
 function costModelClause(values) {
-  if (!values) {
+  if (!values || !values.length) {
     return '';
   }
   if (values.some(v => !validCostModel(v))) {
     throw new SyntaxError('costModel is invalid');
   }
-  return `cost_model IN ('${values.join('\',\'')}')`;
+  return `campaigns.cost_model IN ('${values.join('\',\'')}')`;
 }
 
 function idFilterClause(columnName, values) {
-  if (!values) {
+  if (!values || !values.length) {
     return '';
   }
   if (values.some(id => !validId(id))) {
