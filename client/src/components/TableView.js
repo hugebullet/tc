@@ -263,7 +263,7 @@ class TableView extends PureComponent {
               })}
               {emptyRows > 0 && (
                 <TableRow style={{ height: 48 * emptyRows }}>
-                  <TableCell colSpan={6} />
+                  <TableCell colSpan={columns.length} />
                 </TableRow>
               )}
             </TableBody>
@@ -271,7 +271,7 @@ class TableView extends PureComponent {
               <TableRow>
                 <TablePagination
                   rowsPerPageOptions={[5, 10, 25, 50]}
-                  colSpan={6}
+                  colSpan={columns.length}
                   count={count}
                   rowsPerPage={perPage}
                   page={page}

@@ -1,4 +1,4 @@
-import { all, put, fork, take, call, select, takeLatest } from 'redux-saga/effects'
+import { all, put, fork, take, call, select } from 'redux-saga/effects'
 import {
   REQUEST,
   fetchReports,
