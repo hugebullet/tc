@@ -43,7 +43,7 @@ class TableViewHead extends React.Component {
                   direction={orderDir}
                   onClick={this.createSortHandler(column)}
                 >
-                  {column}
+                  {prettifyColumnName(column)}
                 </TableSortLabel>
               </TableCell>
             );
@@ -288,3 +288,9 @@ TableView.propTypes = {
 };
 
 export default withStyles(styles)(TableView);
+
+function prettifyColumnName(name) {
+  name = name.replace(/([A-Z])/g, ' $1');
+  name = name.charAt(0).toUpperCase() + name.slice(1);
+  return name.replace(/Id/g, 'ID');
+}
