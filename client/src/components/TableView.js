@@ -13,6 +13,98 @@ import FirstPageIcon from '@material-ui/icons/FirstPage';
 import KeyboardArrowLeft from '@material-ui/icons/KeyboardArrowLeft';
 import KeyboardArrowRight from '@material-ui/icons/KeyboardArrowRight';
 import LastPageIcon from '@material-ui/icons/LastPage';
+import TableHead from '@material-ui/core/TableHead';
+import TableSortLabel from '@material-ui/core/TableSortLabel';
+import Toolbar from '@material-ui/core/Toolbar';
+// import Typography from '@material-ui/core/Typography';
+import Tooltip from '@material-ui/core/Tooltip';
+import FilterListIcon from '@material-ui/icons/FilterList';
+
+
+class TableViewHead extends React.Component {
+  createSortHandler = property => event => {
+    this.props.onRequestSort(event, property);
+  };
+
+  render() {
+    const { orderDir, orderBy, columns } = this.props;
+
+    return (
+      <TableHead>
+        <TableRow>
+          {columns.map(column => {
+            return (
+              <TableCell
+                key={column}
+                sortDirection={orderBy === column ? orderDir : false}
+              >
+                <TableSortLabel
+                  active={orderBy === column}
+                  direction={orderDir}
+                  onClick={this.createSortHandler(column)}
+                >
+                  {column}
+                </TableSortLabel>
+              </TableCell>
+            );
+          }, this)}
+        </TableRow>
+      </TableHead>
+    );
+  }
+}
+
+TableViewHead.propTypes = {
+  onRequestSort: PropTypes.func.isRequired,
+  order: PropTypes.string.isRequired,
+  orderBy: PropTypes.string.isRequired,
+  columns: PropTypes.arrayOf(String).isRequired
+};
+
+const toolbarStyles = theme => ({
+  root: {
+    paddingRight: theme.spacing.unit,
+  },
+  spacer: {
+    flex: '1 1 100%',
+  },
+  actions: {
+    color: theme.palette.text.secondary,
+  },
+  title: {
+    flex: '0 0 auto',
+  },
+});
+
+let TableViewToolbar = props => {
+  const { classes } = props;
+
+  return (
+    <Toolbar
+      className={classes.root}
+    >
+      {/* <div className={classes.title}>
+        <Typography variant="h6" id="tableTitle">
+          Nutrition
+        </Typography>
+      </div> */}
+      {/* <div className={classes.spacer} /> */}
+      <div className={classes.actions}>
+        <Tooltip title="Filter list">
+          <IconButton aria-label="Filter list">
+            <FilterListIcon />
+          </IconButton>
+        </Tooltip>
+      </div>
+    </Toolbar>
+  );
+};
+
+TableViewToolbar.propTypes = {
+  classes: PropTypes.object.isRequired
+};
+
+TableViewToolbar = withStyles(toolbarStyles)(TableViewToolbar);
 
 const actionsStyles = theme => ({
   root: {
@@ -22,7 +114,7 @@ const actionsStyles = theme => ({
   },
 });
 
-class TablePaginationActions extends PureComponent {
+class TableViewPaginationActions extends PureComponent {
   handleFirstPageButtonClick = event => {
     this.props.onChangePage(event, 0);
   };
@@ -80,7 +172,7 @@ class TablePaginationActions extends PureComponent {
   }
 }
 
-TablePaginationActions.propTypes = {
+TableViewPaginationActions.propTypes = {
   classes: PropTypes.object.isRequired,
   count: PropTypes.number.isRequired,
   onChangePage: PropTypes.func.isRequired,
@@ -89,8 +181,8 @@ TablePaginationActions.propTypes = {
   theme: PropTypes.object.isRequired,
 };
 
-const TablePaginationActionsWrapped = withStyles(actionsStyles, { withTheme: true })(
-  TablePaginationActions,
+const TableViewPaginationActionsWrapped = withStyles(actionsStyles, { withTheme: true })(
+  TableViewPaginationActions,
 );
 const styles = theme => ({
   root: {
@@ -114,14 +206,31 @@ class TableView extends PureComponent {
     this.props.setTableViewPerPage(parseInt(event.target.value, 10));
   };
 
+  handleRequestSort = (event, property) => {
+    const orderBy = property;
+    let orderDir = 'desc';
+
+    if (this.props.orderBy === property && this.props.orderDir === 'desc') {
+      orderDir = 'asc';
+    }
+
+    this.props.setTableViewOrder({ orderBy, orderDir });
+  };
+
   render() {
-    const { classes, page, perPage, columns, rows, count } = this.props;
+    const { classes, page, perPage, columns, rows, count, orderBy, orderDir } = this.props;
     const emptyRows = perPage - Math.min(perPage, rows.length);
 
     return (
       <Paper className={classes.root}>
         <div className={classes.tableWrapper}>
           <Table className={classes.table}>
+            <TableViewHead
+              orderDir={orderDir}
+              orderBy={orderBy}
+              columns={columns}
+              onRequestSort={this.handleRequestSort}
+            />
             <TableBody>
               {rows.map((row, index) => {
                 return (
@@ -151,7 +260,7 @@ class TableView extends PureComponent {
                   }}
                   onChangePage={this.handleChangePage}
                   onChangeRowsPerPage={this.handleChangePerPage}
-                  ActionsComponent={TablePaginationActionsWrapped}
+                  ActionsComponent={TableViewPaginationActionsWrapped}
                 />
               </TableRow>
             </TableFooter>
@@ -171,8 +280,11 @@ TableView.propTypes = {
   loadingRows: PropTypes.bool.isRequired,
   loadingCount: PropTypes.bool.isRequired,
   count: PropTypes.number.isRequired,
+  orderBy: PropTypes.string.isRequired,
+  orderDir: PropTypes.string.isRequired,
   setTableViewPage: PropTypes.func.isRequired,
   setTableViewPerPage: PropTypes.func.isRequired,
+  setTableViewOrder: PropTypes.func.isRequired
 };
 
 export default withStyles(styles)(TableView);

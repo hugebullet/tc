@@ -1,7 +1,9 @@
 export const SET_TABLE_VIEW_PAGE = 'SET_TABLE_VIEW_PAGE';
 export const SET_TABLE_VIEW_PER_PAGE = 'SET_TABLE_VIEW_PER_PAGE';
+export const SET_TABLE_VIEW_ORDER = 'SET_TABLE_VIEW_ORDER';
 export const setTableViewPage = payload => ({ type: SET_TABLE_VIEW_PAGE, payload });
 export const setTableViewPerPage = payload => ({ type: SET_TABLE_VIEW_PER_PAGE, payload });
+export const setTableViewOrder = payload => ({ type: SET_TABLE_VIEW_ORDER, payload });
 
 export const REQUEST = 0;
 export const SUCCESS = 1;
