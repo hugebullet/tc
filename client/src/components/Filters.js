@@ -7,7 +7,6 @@ import Select from '@material-ui/core/Select';
 import Input from '@material-ui/core/Input';
 import Chip from '@material-ui/core/Chip';
 import MenuItem from '@material-ui/core/MenuItem';
-import { DatePicker } from 'material-ui-pickers';
 
 const styles = theme => ({
   root: {
@@ -28,6 +27,10 @@ const styles = theme => ({
   noLabel: {
     marginTop: theme.spacing.unit * 3,
   },
+  label: {
+    lineHeight: '32px',
+    margin: '23px 8px 8px'
+  }
 });
 
 const ITEM_HEIGHT = 48;
@@ -50,7 +53,7 @@ class Filters extends PureComponent {
   render() {
     const { advertisers, campaigns, advertiserId, campaignId, costModel, theme, classes, setFilters } = this.props;
     return <div className={classes.root}>
-      {/* <Typography variant="h5">Filters</Typography> */}
+      <div className={classes.label}>Filters:</div>
       <FormControl className={classes.formControl}>
         <InputLabel htmlFor="advertisers">Advertisers</InputLabel>
         <Select
