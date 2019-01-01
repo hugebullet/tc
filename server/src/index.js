@@ -205,7 +205,7 @@ function dateClause(operator, date) {
   if (!validDate(date)) {
     throw new SyntaxError('date is invalid');
   }
-  return `\`date\` ${operator} ${date}`;
+  return `reports.\`date\` ${operator} '${date}'`;
 }
 
 const VALID_COST_MODELS = ['per_impression', 'per_click', 'per_install'];
@@ -237,7 +237,7 @@ const GROUP_BY_MAP = {
   campaignName: 'campaigns.name',
   advertiserName: 'advertisers.name',
   costModel: 'campaigns.cost_model',
-  date: 'reports.date'
+  date: 'reports.`date`'
 };
 function groupByMap(k) {
   return GROUP_BY_MAP[k];

@@ -9,7 +9,8 @@ import {
   SET_TABLE_VIEW_COLUMNS,
   fetchAdvertisers,
   fetchCampaigns,
-  SET_FILTERS
+  SET_FILTERS,
+  SET_DATES
 } from '../actions';
 import * as api from '../services/api';
 
@@ -21,7 +22,7 @@ export default function* root() {
     fork(onOtherApiRequest(fetchCampaigns, api.fetchCampaigns)),
     fork(onTableViewColumnsChange),
     fork(onTableViewChange),
-    fork(onFilterChange),
+    fork(onFiltersOrDatesChange),
     fork(onStartup)
   ]);
 };
@@ -40,7 +41,7 @@ function onReportsRequest(actionCreators, apiCall) {
       const { target } = payload;
       const state = yield select();
       try {
-        const data = yield call(apiCall, { ...state[target], filter: state.filters });
+        const data = yield call(apiCall, { ...state[target], filter: state.filters, ...state.dates });
         yield put(actionCreators.success({ target, data }));
       } catch (data) {
         yield put(actionCreators.failure({ target, data }));
@@ -77,9 +78,9 @@ function* onTableViewColumnsChange() {
   }
 }
 
-function* onFilterChange() {
+function* onFiltersOrDatesChange() {
   while (true) {
-    yield take(SET_FILTERS);
+    yield take([SET_FILTERS, SET_DATES]);
     yield put(fetchReports.request({ target: 'tableView' }));
     yield put(fetchReportsCount.request({ target: 'tableView' }));
   }

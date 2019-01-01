@@ -1,3 +1,4 @@
+import moment from 'moment';
 import {
   fetchReports,
   fetchReportsCount,
@@ -9,7 +10,8 @@ import {
   SET_TABLE_VIEW_PAGE,
   SET_TABLE_VIEW_ORDER,
   SET_TABLE_VIEW_COLUMNS,
-  SET_FILTERS
+  SET_FILTERS,
+  SET_DATES
 } from '../actions';
 import { combineReducers } from 'redux';
 
@@ -17,7 +19,8 @@ export default combineReducers({
   tableView,
   advertisers,
   campaigns,
-  filters
+  filters,
+  dates
 });
 
 function tableView(state = {
@@ -94,5 +97,17 @@ function filters(state = {
       return { ...state, ...payload };
     default:
     return state;
+  }
+}
+
+function dates(state = {
+  startDate: moment('2018-01-01').toDate(),
+  endDate: moment('2018-12-31').toDate()
+}, { type, payload }) {
+  switch (type) {
+    case SET_DATES:
+      return { ...state, ...payload };
+    default:
+      return state;
   }
 }

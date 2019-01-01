@@ -1,5 +1,6 @@
 import 'isomorphic-fetch';
 import { URL } from 'whatwg-url';
+import moment from 'moment';
 const API_URL = (process.env.API_URL || 'http://localhost:3001') + '/api';
 
 const REPORTS_PARAMS = ['columns', 'page', 'perPage', 'filter', 'startDate', 'endDate', 'orderBy', 'orderDir'];
@@ -46,6 +47,8 @@ function appendSearchParams(url, params, paramWhitelist) {
     }
     if (Array.isArray(params[key])) {
       params[key].forEach(value => url.searchParams.append(`${key}[]`, value))
+    } else if (params[key] instanceof Date) {
+      url.searchParams.append(key, moment(params[key]).format('YYYY-MM-DD'));
     } else if (typeof params[key] === 'object'){
       url.searchParams.append(key, JSON.stringify(params[key]));
     } else {

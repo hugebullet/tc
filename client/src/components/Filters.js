@@ -7,6 +7,7 @@ import Select from '@material-ui/core/Select';
 import Input from '@material-ui/core/Input';
 import Chip from '@material-ui/core/Chip';
 import MenuItem from '@material-ui/core/MenuItem';
+import { DatePicker } from 'material-ui-pickers';
 
 const styles = theme => ({
   root: {
