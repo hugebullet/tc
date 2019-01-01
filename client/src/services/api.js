@@ -1,11 +1,11 @@
 import 'isomorphic-fetch';
 import { URL } from 'whatwg-url';
 import moment from 'moment';
-const API_URL = (process.env.API_URL || 'http://localhost:3001') + '/api';
+const REACT_APP_API_URL = (process.env.REACT_APP_API_URL || 'http://localhost:3001') + '/api';
 
 const REPORTS_PARAMS = ['columns', 'page', 'perPage', 'filter', 'startDate', 'endDate', 'orderBy', 'orderDir'];
 export async function fetchReports(params) {
-  const url = new URL(`${API_URL}/reports`);
+  const url = new URL(`${REACT_APP_API_URL}/reports`);
   appendSearchParams(url, params, REPORTS_PARAMS);
   const response = await fetch(url);
   if (response.status !== 200) {
@@ -16,7 +16,7 @@ export async function fetchReports(params) {
 
 const REPORTS_COUNT_PARAMS = ['columns', 'filter', 'startDate', 'endDate'];
 export async function fetchReportsCount(params) {
-  const url = new URL(`${API_URL}/reports/count`);
+  const url = new URL(`${REACT_APP_API_URL}/reports/count`);
   appendSearchParams(url, params, REPORTS_COUNT_PARAMS);
   const response = await fetch(url);
   if (response.status !== 200) {
@@ -25,7 +25,7 @@ export async function fetchReportsCount(params) {
   return response.json();
 }
 export async function fetchAdvertisers() {
-  const response = await fetch(`${API_URL}/advertisers`);
+  const response = await fetch(`${REACT_APP_API_URL}/advertisers`);
   if (response.status !== 200) {
     throw new Error('Failed to load advertisers')
   }
@@ -33,7 +33,7 @@ export async function fetchAdvertisers() {
 }
 
 export async function fetchCampaigns() {
-  const response = await fetch(`${API_URL}/campaigns`);
+  const response = await fetch(`${REACT_APP_API_URL}/campaigns`);
   if (response.status !== 200) {
     throw new Error('Failed to load campaigns')
   }

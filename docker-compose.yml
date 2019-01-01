@@ -11,7 +11,7 @@ services:
       - ./docker-compose-data/mysql:/var/lib/mysql
   server:
     build: ./server
-    command: ./node_modules/.bin/nodemon -r dotenv/config src/index.js
+    command: ./node_modules/.bin/nodemon index.js
     environment:
       DATABASE_URL: mysql2://root:root@mysql:3306/ads
       PORT: 3001
@@ -24,7 +24,7 @@ services:
   client:
     build: ./client
     environment:
-      API_URL: http://localhost:3001
+      REACT_APP_API_URL: http://localhost:3001
     ports:
       - 3000:3000
     volumes:

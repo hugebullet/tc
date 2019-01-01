@@ -5,7 +5,11 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node src/index.js"
+    "start": "node index.js",
+    "develop": "nodemon -r dotenv/config index.js"
+  },
+  "engines": {
+    "node": "10.x"
   },
   "author": "",
   "license": "ISC",

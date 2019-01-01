@@ -12,6 +12,8 @@ app.use(cors({
   origin: 'http://localhost:3000'
 }));
 
+app.use(express.static('public'));
+
 app.get('/api/advertisers', (req, res) => {
   connection.query('SELECT * FROM advertisers', (err, results) => {
     if (err) {
