@@ -9,3 +9,23 @@ services:
       - 33060:3306
     volumes:
       - ./docker-compose-data/mysql:/var/lib/mysql
+  server:
+    build: ./server
+    command: ./node_modules/.bin/nodemon -r dotenv/config src/index.js
+    environment:
+      DATABASE_URL: mysql2://root:root@mysql:3306/ads
+      PORT: 3001
+    links:
+      - mysql
+    ports:
+      - 3001:3001
+    volumes:
+      - ./server:/app
+  client:
+    build: ./client
+    environment:
+      API_URL: http://localhost:3001
+    ports:
+      - 3000:3000
+    volumes:
+      - ./client:/app
