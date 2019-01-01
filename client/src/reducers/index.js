@@ -11,12 +11,14 @@ import {
   SET_TABLE_VIEW_ORDER,
   SET_TABLE_VIEW_COLUMNS,
   SET_FILTERS,
-  SET_DATES
+  SET_DATES,
+  SET_CHART_VIEW_SECOND_COLUMN
 } from '../actions';
 import { combineReducers } from 'redux';
 
 export default combineReducers({
   tableView,
+  chartView,
   advertisers,
   campaigns,
   filters,
@@ -36,9 +38,9 @@ function tableView(state = {
 }, { type, payload }) {
   switch (type) {
     case fetchReports[REQUEST]:
-      return { ...state, loadingRows: true };
+      return payload.target !== 'tableView' ? state : { ...state, loadingRows: true };
     case fetchReportsCount[REQUEST]:
-      return { ...state, loadingCount: true };
+      return payload.target !== 'tableView' ? state : { ...state, loadingCount: true };
     case fetchReports[SUCCESS]:
       return payload.target !== 'tableView' ? state : {
         ...state,
@@ -64,6 +66,33 @@ function tableView(state = {
       const orderBy = payload.includes(state.orderBy) ? state.orderBy : payload[0];
       const orderDir = orderBy !== state.orderBy ? 'desc' : state.orderDir;
       return { ...state, columns: payload, page: 0, orderBy, orderDir };
+    default:
+      return state;
+  }
+}
+
+function chartView(state = {
+  loading: true,
+  columns: ['date', 'cost'],
+  orderBy: 'date',
+  orderDir: 'asc',
+  perPage: 9999,
+  rows: []
+}, { type, payload }) {
+  switch (type) {
+    case fetchReports[REQUEST]:
+      return payload.target !== 'chartView' ? state : { ...state, loadingRows: true };
+    case fetchReports[SUCCESS]:
+      return payload.target !== 'chartView' ? state : {
+        ...state,
+        rows: payload.data,
+        loading: false
+      };
+    case SET_CHART_VIEW_SECOND_COLUMN:
+      return {
+        ...state,
+        columns: ['date', payload]
+      }
     default:
       return state;
   }

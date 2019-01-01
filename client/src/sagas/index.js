@@ -1,4 +1,4 @@
-import { all, put, fork, take, call, select } from 'redux-saga/effects'
+import { all, put, fork, take, call, select, takeEvery } from 'redux-saga/effects'
 import {
   REQUEST,
   fetchReports,
@@ -10,7 +10,8 @@ import {
   fetchAdvertisers,
   fetchCampaigns,
   SET_FILTERS,
-  SET_DATES
+  SET_DATES,
+  SET_CHART_VIEW_SECOND_COLUMN
 } from '../actions';
 import * as api from '../services/api';
 
@@ -22,22 +23,23 @@ export default function* root() {
     fork(onOtherApiRequest(fetchCampaigns, api.fetchCampaigns)),
     fork(onTableViewColumnsChange),
     fork(onTableViewChange),
+    fork(onChartViewSecondColumnChange),
     fork(onFiltersOrDatesChange),
     fork(onStartup)
   ]);
 };
 
 function* onStartup () {
-  yield put(fetchReports.request({ target: 'tableView' }));
-  yield put(fetchReportsCount.request({ target: 'tableView' }));
   yield put(fetchAdvertisers.request());
   yield put(fetchCampaigns.request());
+  yield put(fetchReports.request({ target: 'chartView' }));
+  yield put(fetchReports.request({ target: 'tableView' }));
+  yield put(fetchReportsCount.request({ target: 'tableView' }));
 }
 
 function onReportsRequest(actionCreators, apiCall) {
   return function* () {
-    while (true) {
-      const { payload } = yield take(actionCreators[REQUEST]);
+    yield takeEvery(actionCreators[REQUEST], function* ({ payload }) {
       const { target } = payload;
       const state = yield select();
       try {
@@ -46,7 +48,7 @@ function onReportsRequest(actionCreators, apiCall) {
       } catch (data) {
         yield put(actionCreators.failure({ target, data }));
       }
-    }
+    });
   }
 }
 
@@ -78,9 +80,17 @@ function* onTableViewColumnsChange() {
   }
 }
 
+function* onChartViewSecondColumnChange() {
+  while (true) {
+    yield take(SET_CHART_VIEW_SECOND_COLUMN);
+    yield put(fetchReports.request({ target: 'chartView' }));
+  }
+}
+
 function* onFiltersOrDatesChange() {
   while (true) {
     yield take([SET_FILTERS, SET_DATES]);
+    yield put(fetchReports.request({ target: 'chartView' }));
     yield put(fetchReports.request({ target: 'tableView' }));
     yield put(fetchReportsCount.request({ target: 'tableView' }));
   }

@@ -22,6 +22,7 @@ import Toolbar from '@material-ui/core/Toolbar';
 import Checkbox from '@material-ui/core/Checkbox';
 import FormGroup from '@material-ui/core/FormGroup';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
+import { prettifyColumnName } from '../util';
 
 
 class TableViewHead extends React.Component {
@@ -309,9 +310,3 @@ TableView.propTypes = {
 };
 
 export default withStyles(styles)(TableView);
-
-function prettifyColumnName(name) {
-  name = name.replace(/([A-Z])/g, ' $1');
-  name = name.charAt(0).toUpperCase() + name.slice(1);
-  return name.replace(/Id/g, 'ID');
-}
