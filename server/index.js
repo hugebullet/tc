@@ -13,23 +13,27 @@ app.use(cors({
 app.use(express.static('public'));
 
 app.get('/api/advertisers', (req, res) => {
-  connection().query('SELECT * FROM advertisers', (err, results) => {
+  const connection = makeConnection();
+  connection.query('SELECT * FROM advertisers', (err, results) => {
     if (err) {
       console.error(err);
       return res.sendStatus(500);
     }
     res.send(camelizeKeys(results));
   });
+  connection.end();
 });
 
 app.get('/api/campaigns', (req, res) => {
-  connection().query('SELECT * FROM campaigns', (err, results) => {
+  const connection = makeConnection();
+  connection.query('SELECT * FROM campaigns', (err, results) => {
     if (err) {
       console.error(err);
       return res.sendStatus(500);
     }
     res.send(camelizeKeys(results));
   });
+  connection.end();
 });
 
 app.get('/api/advertisers/:id/campaigns', (req, res) => {
@@ -37,21 +41,23 @@ app.get('/api/advertisers/:id/campaigns', (req, res) => {
   if (!validId(advertiserId)) {
     return res.status(400).send('Invalid advertiser ID');
   }
-  connection().query(`SELECT * FROM campaigns WHERE advertiser_id = ${advertiserId}`, (err, results) => {
+  const connection = makeConnection();
+  connection.query(`SELECT * FROM campaigns WHERE advertiser_id = ${advertiserId}`, (err, results) => {
     if (err) {
       console.error(err);
       return res.sendStatus(500);
     }
     res.send(camelizeKeys(results));
   });
+  connection.end();
 });
 
 app.get('/api/reports', (req, res) => {
   try {
     const query = `${select(req)}${join(req)}${where(req)}${groupBy(req)}${orderBy(req)}${limit(req)}`;
     console.log(query);
-
-    connection().query(query, (err, results) => {
+    const connection = makeConnection();
+    connection.query(query, (err, results) => {
       if (err) {
         throw err;
       }
@@ -62,6 +68,7 @@ app.get('/api/reports', (req, res) => {
         return row;
       }));
     });
+    connection.end();
   } catch (e) {
     const clientError = e instanceof SyntaxError || e instanceof TypeError;
     if (clientError) {
@@ -77,13 +84,14 @@ app.get('/api/reports/count', (req, res) => {
   try {
     const query = `SELECT COUNT(*) AS count FROM (${select(req)}${join(req)}${where(req)}${groupBy(req)}) AS innerQuery`;
     console.log(query);
-
-    connection().query(query, (err, results) => {
+    const connection = makeConnection();
+    connection.query(query, (err, results) => {
       if (err) {
         throw err;
       }
       res.send(results);
     });
+    connection.end();
   } catch (e) {
     const clientError = e instanceof SyntaxError || e instanceof TypeError;
     if (clientError) {
@@ -243,6 +251,6 @@ function groupByMap(k) {
   return GROUP_BY_MAP[k];
 }
 
-function connection() {
+function makeConnection() {
   return mysql.createConnection(process.env.DATABASE_URL);
 }
