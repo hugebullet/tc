@@ -32,7 +32,7 @@ class Dates extends PureComponent {
           value ? [/\d/, /\d/, /\d/, /\d/, '-', /\d/, /\d/, '-', /\d/, /\d/] : []
         }
         value={endDate}
-        onChange={date => setDates({ endDate: date })}
+        onChange={date => setDates({ endDate: date.toDate() })}
         disableOpenOnEnter
         animateYearScrolling={false}
       />
